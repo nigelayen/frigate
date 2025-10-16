@@ -1,0 +1,163 @@
+mqtt:
+  host: "{FRIGATE_MQTT_HOST}"
+  user: "{FRIGATE_MQTT_USER}"
+  password: "{FRIGATE_MQTT_PASSWORD}"
+
+ffmpeg:
+  hwaccel_args: preset-vaapi
+
+detectors:
+  coral:
+    type: edgetpu
+    device: usb
+
+objects:
+  track:
+    - car
+    - cat
+    - dog
+    - person
+
+review:
+  alerts:
+    labels:
+      - car
+      - person
+
+birdseye:
+  restream: true
+  enabled: true
+  layout:
+    max_cameras: 1
+  mode: continuous
+
+record:
+  enabled: true
+  retain:
+    days: 7
+    mode: motion
+  alerts:
+    retain:
+      days: 7
+  detections:
+    retain:
+      days: 7
+snapshots:
+  enabled: true
+  retain:
+    default: 7
+
+go2rtc:
+  streams:
+    backyard:
+      - ffmpeg:http://{FRIGATE_BACKYARD_IP}/flv?port=1935&app=bcs&stream=channel0_main.bcs&user={FRIGATE_BACKYARD_USER}&password={FRIGATE_BACKYARD_PASSWORD}#video=copy#audio=copy#audio=opus
+    backyard_sub:
+      - ffmpeg:http://{FRIGATE_BACKYARD_IP}/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user={FRIGATE_BACKYARD_USER}&password={FRIGATE_BACKYARD_PASSWORD}
+    sidegate:
+      - ffmpeg:http://{FRIGATE_SIDEGATE_IP}/flv?port=1935&app=bcs&stream=channel0_main.bcs&user={FRIGATE_SIDEGATE_USER}&password={FRIGATE_SIDEGATE_PASSWORD}#video=copy#audio=copy#audio=opus
+    sidegate_sub:
+      - ffmpeg:http://{FRIGATE_SIDEGATE_IP}/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user={FRIGATE_SIDEGATE_USER}&password={FRIGATE_SIDEGATE_PASSWORD}
+    driveway:
+      - ffmpeg:http://{FRIGATE_DRIVEWAY_IP}/flv?port=1935&app=bcs&stream=channel0_main.bcs&user={FRIGATE_DRIVEWAY_USER}&password={FRIGATE_DRIVEWAY_PASSWORD}#video=copy#audio=copy#audio=opus
+    driveway_sub:
+      - ffmpeg:http://{FRIGATE_DRIVEWAY_IP}/flv?port=1935&app=bcs&stream=channel0_ext.bcs&user={FRIGATE_DRIVEWAY_USER}&password={FRIGATE_DRIVEWAY_PASSWORD}
+
+cameras:
+  backyard:
+    birdseye:
+      order: 3
+      mode: motion
+    motion:
+      threshold: 30
+      contour_area: 30
+      improve_contrast: true
+      mask: 0.321,0.296,0.507,0.311,0.512,0.433,0.423,0.475,0.352,0.469
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/backyard
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/backyard_sub
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    objects:
+      filters:
+        person:
+          mask:
+            - 0.43,0.249,0.519,0.257,0.493,0.495,0.412,0.504
+            - 0.124,0.308,0.277,0.308,0.274,0.487,0.127,0.493
+  sidegate:
+    birdseye:
+      order: 2
+      mode: motion
+    motion:
+      threshold: 30
+      contour_area: 30
+      improve_contrast: true
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/sidegate
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/sidegate_sub
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    objects:
+      filters:
+        person:
+          mask: 0.002,0.989,0.003,0.515,0.348,0.51,0.347,0.988
+  driveway:
+    birdseye:
+      order: 1
+      mode: motion
+    snapshots:
+      required_zones:
+        - Zone1
+    review:
+      detections: {}
+    ffmpeg:
+      inputs:
+        - path: rtsp://127.0.0.1:8554/driveway
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+        - path: rtsp://127.0.0.1:8554/driveway_sub
+          input_args: preset-rtsp-restream
+          roles:
+            - detect
+    motion:
+      threshold: 50
+      contour_area: 30
+      improve_contrast: true
+    zones: {}
+    objects:
+      mask:
+        - 0.001,0.198,0.238,0.068,0.244,0.106,0.002,0.237
+        - 0.135,0.18,0.612,0.105,0.998,0.159,0.998,0.226,0.124,0.226
+  garage:
+    birdseye:
+      order: 4
+      mode: motion
+    motion:
+      threshold: 50
+      contour_area: 50
+      mask:
+        - 0.368,0.214,0.597,0.181,0.617,0.375,0.376,0.443
+        - 0.001,0.003,0.482,0.005,0.487,0.058,0.001,0.076
+    ffmpeg:
+      inputs:
+        - path: rtsp://{FRIGATE_GARAGE_USER}:{FRIGATE_GARAGE_PASSWORD}@192.168.77.135:554/h264_hd.sdp
+          input_args: preset-rtsp-restream
+          roles:
+            - record
+            - detect
+version: 0.15-1
+camera_groups:
+  Outdoor_Motion:
+    order: 1
+    icon: LuSwitchCamera
+    cameras: birdseye
