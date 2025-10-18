@@ -1,3 +1,5 @@
+<img src="https://github.com/blakeblackshear/frigate/raw/dev/docs/static/img/frigate.png" alt="Frigate" width="200"/>
+
 # Frigate NVR (Network Video Recorder)
 
 [Frigate NVR](https://github.com/blakeblackshear/frigate)  is an open source NVR built around real-time AI object detection. All processing is performed locally on your own hardware, and your camera feeds never leave your home.
