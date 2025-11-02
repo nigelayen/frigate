@@ -6,15 +6,30 @@ mqtt:
 ffmpeg:
   hwaccel_args: preset-vaapi
 
+genai:
+  enabled: True
+  provider: openai
+  api_key: "{OPENAI_API_KEY}"
+  model: gpt-4o
+
 detectors:
-  coral:
-    type: edgetpu
-    device: usb
+  ov:
+    type: openvino
+    device: GPU
+
+model:
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
 
 objects:
   track:
     - car
     - cat
+    - bird
     - dog
     - person
 
